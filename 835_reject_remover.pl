@@ -22,7 +22,7 @@ my $clp_code;
 my $line; my $clp; my @clps; 
 my $head; my $tail;
 my $rj=0; my $tc=0;
-
+my $all_claims='';
 my @docfiles;
 ##
 ##  read all in a string
@@ -39,7 +39,7 @@ foreach $file (@docfiles) {
    if (($file =~/\.csv$/)or($file=~/no-reject/)){ 
      next;   # Do not process processed files.
    }
-   ##
+
    ## Flush Line
    undef $line;
    
@@ -71,7 +71,7 @@ foreach $file (@docfiles) {
 
   $head = shift(@clps);  ## perhaps the first element is the header?
   
-  print  FOUT"$head \n";
+  $all_claims = $head;
   
   foreach $clp (@clps){
   
@@ -86,16 +86,26 @@ foreach $file (@docfiles) {
           ## provision for the case where last CLP was a reject.  We need the trailing data.
           if ($clp =~/PLB\x{1D}/){
               $tail = $';
-              print FOUT "PLB\x{1D}$tail";
-          }
+              $all_claims .= "PLB\x{1D}$tail\n";
+              print_fixed_lines($all_claims);
+          }   
       }else{
-         print FOUT"CLP\x{1D}$clp \n";
+         $all_claims .= "CLP\x{1D}$clp";
       }
       $tc++;
-
     }
     
   }
   print "Total Claims  $tc, \n Total Rejects $rj\n";  # prints to screen/STDOUT
   close (FOUT);
+}
+
+sub print_fixed_lines{
+#  breaks string in chunks of 80 chars, adds new line, prints.
+#
+   my $string = shift(@_);
+   while ($string =~ m/(.{1,80})/gs) {
+     print FOUT $1, "\n";
+   }
+   return;
 }
