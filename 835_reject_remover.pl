@@ -89,11 +89,11 @@ foreach $file (@docfiles) {
          $all_claims .= "CLP\x{1D}$clp";
       }
        ## provision for the case where last CLP was a reject.  We need the trailing data.  # PLB or SE?
-      if ($clp =~/(PLB)\x{1D}/){
+      if ($clp =~/\x{1E}PLBx{1D}/){
          $tail = $';
-         $all_claims .= "$1\x{1D}$tail\n";
+         $all_claims .= "\x{1E}PLB\x{1D}$tail\n";
          print_fixed_lines($all_claims);
-      }elsif ($clp =~/\x{1E}(SE)\x{1D}/){
+      }elsif ($clp =~/\x{1E}SE\x{1D}/){
          print_fixed_lines($all_claims);
       }
       $tc++;
