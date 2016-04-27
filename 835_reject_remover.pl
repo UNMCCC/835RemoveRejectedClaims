@@ -41,7 +41,7 @@ foreach $file (@docfiles) {
    }
 
    ## Flush Line
-   undef $line;
+   undef $line;  
    
    # Read the contents of the PT file
    open(DOC, "$file") or print("Error opening $file $!\n");
@@ -64,16 +64,17 @@ foreach $file (@docfiles) {
   ##  Each CLP (claims paid) is follow by a code- status.  4 is reject.
   ##   - the Rx  (first #)    - Whether is a 1,2 or 4. (second #)
   
-  undef @clps;       ##  Flush buffers - do not carry over previous 835 data.
-  undef $clp;  undef $clp_code ;
+   undef @clps;       ##  Flush buffers - do not carry over previous 835 data.
+   undef $clp;  undef $clp_code ;
+   undef $all_claims; undef $tc; undef $rj;
   
-  @clps = split(/CLP\x{1D}/,$line);
+   @clps = split(/CLP\x{1D}/,$line);
 
-  $head = shift(@clps);  ## perhaps the first element is the header?
+   $head = shift(@clps);  ## perhaps the first element is the header?
   
-  $all_claims = $head;
+   $all_claims = $head;
   
-  foreach $clp (@clps){
+   foreach $clp (@clps){
   
     $clp =~ s/\n//g;       ## removes newline characters (gets on way of pattern match)
     
@@ -83,21 +84,26 @@ foreach $file (@docfiles) {
 
        if ($clp_code == 4){
          $rj++;  
-          ## provision for the case where last CLP was a reject.  We need the trailing data.
-          if ($clp =~/PLB\x{1D}/){
-              $tail = $';
-              $all_claims .= "PLB\x{1D}$tail\n";
-              print_fixed_lines($all_claims);
-          }   
+         
       }else{
          $all_claims .= "CLP\x{1D}$clp";
+      }
+       ## provision for the case where last CLP was a reject.  We need the trailing data.  # PLB or SE?
+      if ($clp =~/(PLB)\x{1D}/){
+         $tail = $';
+         $all_claims .= "$1\x{1D}$tail\n";
+         print_fixed_lines($all_claims);
+      }elsif ($clp =~/\x{1E}(SE)\x{1D}/){
+         print_fixed_lines($all_claims);
       }
       $tc++;
     }
     
-  }
-  print "Total Claims  $tc, \n Total Rejects $rj\n";  # prints to screen/STDOUT
-  close (FOUT);
+ }
+  
+ print "Total Claims  $tc, \n Total Rejects $rj\n";  # prints to screen/STDOUT
+  
+ close (FOUT);
 }
 
 sub print_fixed_lines{
