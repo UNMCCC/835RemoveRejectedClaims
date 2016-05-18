@@ -3,7 +3,7 @@
 ##   835 reject remover                             Inigo San Gil, Apr 2016
 ##
 ##   Description:    A program that removes the rejects from an 835 file
-#3
+##
 ##          This script will output an 835 file in the original format without rejects.  
 ##          the file name will contain a no-rejects string
 ##
@@ -82,14 +82,13 @@ foreach $file (@docfiles) {
 
       $clp_code = $2;
 
-       if ($clp_code == 4){
-         $rj++;  
-         
+      if ($clp_code == 4){
+         $rj++;     
       }else{
          $all_claims .= "CLP\x{1D}$clp";
       }
-       ## provision for the case where last CLP was a reject.  We need the trailing data.  # PLB or SE?
-      if ($clp =~/\x{1E}PLBx{1D}/){
+      ## If this is the last CLP, get the trailing data.  # PLB or SE?
+      if ($clp =~/\x{1E}PLB\x{1D}/){
          $tail = $';
          $all_claims .= "\x{1E}PLB\x{1D}$tail\n";
          print_fixed_lines($all_claims);
