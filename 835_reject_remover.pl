@@ -3,7 +3,7 @@
 ##   835 reject remover                             Inigo San Gil, Apr 2016
 ##
 ##   Description:    A program that removes the rejects from an 835 file
-##
+#3
 ##          This script will output an 835 file in the original format without rejects.  
 ##          the file name will contain a no-rejects string
 ##
@@ -21,9 +21,10 @@ my $file; my $outfile;
 my $clp_code;
 my $line; my $clp; my @clps; 
 my $head; my $tail;
-my $rj=0; my $tc=0;
+my $rj = 0; my $tc = 0;
 my $all_claims='';
 my @docfiles;
+my $ispaid = 0;
 ##
 ##  read all in a string
 undef $/;
@@ -73,7 +74,7 @@ foreach $file (@docfiles) {
    $head = shift(@clps);  ## perhaps the first element is the header?
   
    $all_claims = $head;
-  
+   
    foreach $clp (@clps){
   
     $clp =~ s/\n//g;       ## removes newline characters (gets on way of pattern match)
@@ -84,15 +85,18 @@ foreach $file (@docfiles) {
 
       if ($clp_code == 4){
          $rj++;     
+         $ispaid = 0;
       }else{
          $all_claims .= "CLP\x{1D}$clp";
+         $ispaid = 1;
       }
-      ## If this is the last CLP, get the trailing data.  # PLB or SE?
+      ## was this the last CLP -- We need the trailing data.  # PLB or SE?
       if ($clp =~/\x{1E}PLB\x{1D}/){
          $tail = $';
-         $all_claims .= "\x{1E}PLB\x{1D}$tail\n";
+         $all_claims .= "\x{1E}PLB\x{1D}$tail\n" unless $ispaid;
          print_fixed_lines($all_claims);
       }elsif ($clp =~/\x{1E}SE\x{1D}/){
+         $all_claims .= "\x{1E}SE\x{1D}$tail\n" unless $ispaid;
          print_fixed_lines($all_claims);
       }
       $tc++;
